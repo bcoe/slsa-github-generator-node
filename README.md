@@ -1,7 +1,6 @@
-# Generation of SLSA3+ provenance for Go binaries
-This repository contains a reference implementation for generating non-forgeable [SLSA provenance](https://slsa.dev/) that meets the requirement for the [SLSA level 3 and above](https://slsa.dev/spec/v0.1/levels) for projects using the Go programming language.
+# Generation of SLSA3+ provenance for Node.js packages
 
-This repository contains the code, examples and technical design for our blog post on [Non forgeable SLSA provenance using GitHub workflows](https://security.googleblog.com/2022/04/improving-software-supply-chain.html).
+This repository contains a reference implementation for generating non-forgeable [SLSA provenance](https://slsa.dev/) that meets the requirement for the [SLSA level 3 and above](https://slsa.dev/spec/v0.1/levels) for projects using the Go programming language.
 
 ***Note: This is a beta release and we are looking for your feedback. The official 1.0 release should come out in the next few weeks*** 
 
@@ -22,7 +21,7 @@ ________
 ________
 
 ## Generation
-To generate provenance for a golang binary, follow the steps below:
+To generate provenance for an npm package, follow the steps below:
 
 ### Example provenance
 An example of the provenance generated from this repo is below:
@@ -111,38 +110,17 @@ An example of the provenance generated from this repo is below:
 Define a configuration file called `.slsa-nodereleaser.yml` in the root of your project:
 
 ```yml
+# TODO: what should this file look like?
 version: 1
-# List of env variables used during compilation.
-env:
-  - GO111MODULE=on
-  - CGO_ENABLED=0
-
-# Flags for the compiler.
-flags:
-  - -trimpath
-  - -tags=netgo
-
-goos: linux     # same values as GOOS env variable. 
-goarch: amd64   # same values as GOARCH env variable. 
-
-# Binary name.
-# {{ .OS }} will be replaced by goos field in the config file.
-# {{ .Arch }} will be replaced by goarch field in the config file.
-binary: binary-{{ .OS }}-{{ .Arch }}
-
-# (Optional) ldflags generated dynamically in the workflow, and set as the `env` input variables in the workflow. 
-ldflags:
-  - '{{ .Env.VERSION_LDFLAGS }}'
 ```
 
 ### Workflow inputs
 
-The builder workflow [slsa-framework/slsa-github-generator-go/.github/workflows/builder.yml](.github/workflows/builder.yml) accepts the following inputs:
+The builder workflow [bcoe/slsa-github-generator-node/.github/workflows/builder.yml](.github/workflows/builder.yml) accepts the following inputs:
 
 | Name | Required | Description |
 | ------------ | -------- | ----------- |
-| `go-version` | no | The go version for your project. This value is passed, unchanged, to the [actions/setup-go](https://github.com/actions/setup-go) action when setting up the environment |
-| `env` | no | A list of environment variables, seperated by `,`: `VAR1: value, VAR2: value`. This is typically used to pass dynamically-generated values, such as `ldflags`. Note that only environment variables with names starting with `CGO_` or `GO` are accepted.|
+| `env` | no | A list of environment variables, seperated by `,`: `VAR1: value, VAR2: value`. This is typically used to pass dynamically-generated values, such as `max_old_space_size`. Note that only environment variables with names starting with `NODE_` or `NODE` are accepted.|
 
 ### Workflow Example
 Create a new workflow, say `.github/workflows/slsa-nodereleaser.yml`:

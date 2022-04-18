@@ -61,14 +61,14 @@ func main() {
 			usage(os.Args[0])
 		}
 
-		node, err := exec.LookPath("node")
+		npm, err := exec.LookPath("npm")
 		check(err)
 
 		cfg, err := pkg.PkgJSONFromFile("package.json")
 		check(err)
 		fmt.Println(cfg)
 
-		nodebuild := pkg.NodeBuildNew(node, cfg)
+		nodebuild := pkg.NodeBuildNew(npm, cfg)
 
 		// Set env variables encoded as arguments.
 		err = nodebuild.SetArgEnvVariables(buildCmd.Args()[1])
