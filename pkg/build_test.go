@@ -200,7 +200,7 @@ func Test_generateOutputFilename(t *testing.T) {
 			if err != nil {
 				t.Errorf("pkgJSONFromConfig: %v", err)
 			}
-			b := NodeBuildNew("node compiler", c)
+			b := NodeBuildNew("node compiler", "npm", c)
 
 			fn, err := b.generateOutputFilename()
 			if !errCmp(err, tt.expected.err) {

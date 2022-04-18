@@ -46,14 +46,16 @@ var allowedEnvVariablePrefix = map[string]bool{
 
 type NodeBuild struct {
 	pkgJson *PkgJsonConfig
+	node   string
 	npm    string
 	// Note: static env variables are contained in cfg.Env.
 	argEnv map[string]string
 }
 
-func NodeBuildNew(npm string, pkgJson *PkgJsonConfig) *NodeBuild {
+func NodeBuildNew(node string, npm string, pkgJson *PkgJsonConfig) *NodeBuild {
 	c := NodeBuild{
 		pkgJson: pkgJson,
+		node:   node,
 		npm:    npm,
 		argEnv:  make(map[string]string),
 	}
@@ -110,12 +112,11 @@ func (b *NodeBuild) Run(dry bool) error {
 		return nil
 	}
 
-	// Set the filename last.
-	command := append(flags, []string{"pack"}...)
+	command := append([]string{b.npm, "pack"}, flags...)
 
 	fmt.Println("command", command)
 	fmt.Println("env", envs)
-	return syscall.Exec(b.npm, command, envs)
+	return syscall.Exec(b.node, command, envs)
 }
 
 func marshallList(args []string) (string, error) {
