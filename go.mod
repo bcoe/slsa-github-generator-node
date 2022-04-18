@@ -1,4 +1,4 @@
-module github.com/slsa-framework/slsa-github-generator-node/builder
+module github.com/bcoe/slsa-github-generator-node/builder
 
 go 1.17
 

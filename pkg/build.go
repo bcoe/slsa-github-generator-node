@@ -78,10 +78,6 @@ func (b *NodeBuild) Run(dry bool) error {
 	// the compiler is invoked.
 	if dry {
 		// Generate filename.
-		// Note: the filename uses the config file and is resolved if it contains env variables.
-		// `OUTPUT_BINARY` is only used during the actual compilation, an is a trusted
-		// variable hardcoded in the reusable workflow, to avoid weird looking name
-		// that may interfere with the compilation.
 		filename, err := b.generateOutputFilename()
 		if err != nil {
 			return err
@@ -112,13 +108,6 @@ func (b *NodeBuild) Run(dry bool) error {
 		// Share the env variables used.
 		fmt.Printf("::set-output name=node-env::%s\n", menv)
 		return nil
-	}
-
-	// Use the name provider via env variable for the compilation.
-	// This variable is trusted and defined by the re-usable workflow.
-	binary := os.Getenv("OUTPUT_BINARY")
-	if binary == "" {
-		return fmt.Errorf("OUTPUT_BINARY not defined")
 	}
 
 	// Set the filename last.

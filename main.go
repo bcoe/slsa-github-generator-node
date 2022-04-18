@@ -64,17 +64,17 @@ func main() {
 		node, err := exec.LookPath("node")
 		check(err)
 
-		cfg, err := pkg.ConfigFromFile("package.json")
+		cfg, err := pkg.PkgJSONFromFile("package.json")
 		check(err)
 		fmt.Println(cfg)
 
-		nodebuild := pkg.NodeBuildnew(node, cfg)
+		nodebuild := pkg.NodeBuildNew(node, cfg)
 
 		// Set env variables encoded as arguments.
 		err = nodebuild.SetArgEnvVariables(buildCmd.Args()[1])
 		check(err)
 
-		err = gobuild.Run(*buildDry)
+		err = nodebuild.Run(*buildDry)
 		check(err)
 	case provenanceCmd.Name():
 		provenanceCmd.Parse(os.Args[2:])

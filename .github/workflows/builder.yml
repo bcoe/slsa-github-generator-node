@@ -200,7 +200,7 @@ jobs:
     outputs:
       node-package-sha256: ${{ steps.build-sha256.outputs.node-package-sha256 }}
     runs-on: ubuntu-latest
-    needs: [builder]
+    needs: [builder, build-dry]
     steps:
       - name: Checkout the repository
         uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846 # v2.3.4
@@ -250,6 +250,7 @@ jobs:
           CONFIG_FILE: "${{ env.RELEASER_CONFIG }}"
           UNTRUSTED_ENVS: "${{ inputs.env }}"
           UNTRUSTED_WORKING_DIR: "${{ inputs.working-dir }}"
+          UNTRUSTED_BINARY_NAME: "${{ needs.build-dry.outputs.node-package-name }}"
         run: |
           set -euo pipefail
 
@@ -261,7 +262,7 @@ jobs:
           echo "./$BUILDER_BINARY" build "$CONFIG_FILE" "$UNTRUSTED_ENVS"
           export OUTPUT_BINARY="${{ env.GENERATED_BINARY_NAME }}"
           ./"$BUILDER_BINARY" build "$CONFIG_FILE" "$UNTRUSTED_ENVS"
-
+          mv  "$UNTRUSTED_BINARY_NAME" "${{ env.GENERATED_BINARY_NAME }}"
 
       - name: Compute binary hash
         id: build-sha256
