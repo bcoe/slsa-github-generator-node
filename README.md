@@ -152,17 +152,30 @@ jobs:
     steps:
       - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
-          name: ${{ needs.build.outputs.node-artifact-name }}
+          name: ${{ needs.build.outputs.node-package-name }}
       - uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741
         with:
-          name: ${{ needs.build.outputs.node-artifact-name }}.intoto.jsonl
+          name: ${{ needs.build.outputs.node-package-name }}.intoto.jsonl
       - name: Release
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            ${{ needs.build.outputs.node-artifact-name }}
-            ${{ needs.build.outputs.node-artifact-name }}.intoto.jsonl
+            ${{ needs.build.outputs.node-package-name }}
+            ${{ needs.build.outputs.node-package-name }}.intoto.jsonl
+      - uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846 # v2.3.4
+        # these if statements ensure that a publication only occurs when
+        # a new release is created:
+        if: ${{ steps.release.outputs.release_created }}
+      - name: Publish
+        uses: actions/setup-node@56337c425554a6be30cdef71bf441f15be286854 # v3.1.1
+        with:
+          node-version: 16
+          registry-url: 'https://wombat-dressing-room.appspot.com'
+      - run: npm publish ${{ needs.build.outputs.node-package-name }}
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+        if: ${{ steps.release.outputs.release_created }}
 ```
 
 ## Verification of provenance
