@@ -139,6 +139,8 @@ jobs:
   build-dry:
     outputs:
       node-package-name: ${{ steps.build-dry.outputs.node-package-name }}
+      node-command: ${{ steps.build-dry.outputs.go-command }}
+      node-env: ${{ steps.build-dry.outputs.go-env }}
     runs-on: ubuntu-latest
     needs: builder
     steps:
