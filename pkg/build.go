@@ -112,7 +112,7 @@ func (b *NodeBuild) Run(dry bool) error {
 		return nil
 	}
 
-	command := append([]string{b.npm, "pack"}, flags...)
+	command := append([]string{b.node, b.npm, "pack"}, flags...)
 
 	fmt.Println("command", command)
 	fmt.Println("env", envs)
