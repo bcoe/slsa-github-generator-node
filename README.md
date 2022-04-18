@@ -163,8 +163,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    needs: args
-    uses: slsa-framework/slsa-github-generator-go/.github/workflows/builder.yml@main # TODO: use hash upon release.
+    uses: bcoe/slsa-github-generator-node/.github/workflows/builder.yml@main # TODO: use hash upon release.
     with:
       go-version: 1.17
   
