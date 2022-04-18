@@ -15,6 +15,8 @@
 package pkg
 
 import (
+	"encoding/json"
+
 	"errors"
 	"fmt"
 	"os"
@@ -51,6 +53,16 @@ type GoReleaserConfig struct {
 	Binary  string
 }
 
+type PkgJsonConfig struct {
+	Name    string
+	Version string
+}
+
+type pkgJsonConfigFile struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
 func configFromString(b []byte) (*GoReleaserConfig, error) {
 	var cf goReleaserConfigFile
 	if err := yaml.Unmarshal(b, &cf); err != nil {
@@ -84,6 +96,33 @@ func fromConfig(cf *goReleaserConfigFile) (*GoReleaserConfig, error) {
 
 	if err := cfg.setEnvs(cf); err != nil {
 		return nil, err
+	}
+
+	return &cfg, nil
+}
+
+func pkgJSONFromString(b []byte) (*PkgJsonConfig, error) {
+	var cf pkgJsonConfigFile
+	if err := json.Unmarshal(b, &cf); err != nil {
+		return nil, fmt.Errorf("json.Unmarshal: %w", err)
+	}
+
+	return pkgJSONFromConfig(&cf)
+}
+
+func PkgJSONFromFile(pathfn string) (*PkgJsonConfig, error) {
+	cfg, err := os.ReadFile(pathfn)
+	if err != nil {
+		return nil, fmt.Errorf("os.ReadFile: %w", err)
+	}
+
+	return pkgJSONFromString(cfg)
+}
+
+func pkgJSONFromConfig(cf *pkgJsonConfigFile) (*PkgJsonConfig, error) {
+	cfg := PkgJsonConfig{
+		Name:    cf.Name,
+		Version: cf.Version,
 	}
 
 	return &cfg, nil

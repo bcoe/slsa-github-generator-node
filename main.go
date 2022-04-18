@@ -22,7 +22,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/slsa-framework/slsa-github-generator-go/builder/pkg"
+	"github.com/bcoe/slsa-github-generator-node/builder/pkg"
 )
 
 func usage(p string) {
@@ -61,17 +61,17 @@ func main() {
 			usage(os.Args[0])
 		}
 
-		goc, err := exec.LookPath("go")
+		node, err := exec.LookPath("node")
 		check(err)
 
-		cfg, err := pkg.ConfigFromFile(buildCmd.Args()[0])
+		cfg, err := pkg.ConfigFromFile("package.json")
 		check(err)
 		fmt.Println(cfg)
 
-		gobuild := pkg.GoBuildNew(goc, cfg)
+		nodebuild := pkg.NodeBuildnew(node, cfg)
 
 		// Set env variables encoded as arguments.
-		err = gobuild.SetArgEnvVariables(buildCmd.Args()[1])
+		err = nodebuild.SetArgEnvVariables(buildCmd.Args()[1])
 		check(err)
 
 		err = gobuild.Run(*buildDry)

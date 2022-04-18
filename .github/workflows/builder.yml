@@ -147,12 +147,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Code needed (not tested) if go-vesion is made optional.
-      # See https://stackoverflow.com/questions/67368005/check-whether-environment-variable-is-empty.
       - name: Set up node.js environment
         uses: actions/setup-node@56337c425554a6be30cdef71bf441f15be286854 # v3.1.1
-        with:
-          go-version: ${{ inputs.go-version }}
 
       - name: Download builder
         uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # v2.1.0
@@ -176,12 +172,6 @@ jobs:
     
           # Make the builder executable.
           chmod a+x "$BUILDER_BINARY"
-
-      - name: Download dependencies
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm ci
 
       - name: Build dry project
         id: build-dry
@@ -244,7 +234,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          go mod vendor
+          npm ci
 
       # TODO(hermeticity) OS-level.
       # - name: Disable hermeticity

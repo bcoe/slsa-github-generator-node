@@ -1,0 +1,23 @@
+{
+  "name": "slsa-github-generator-node-test",
+  "version": "1.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bcoe/slsa-github-generator-node-test.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bcoe/slsa-github-generator-node-test/issues"
+  },
+  "homepage": "https://github.com/bcoe/slsa-github-generator-node-test#readme",
+  "dependencies": {
+    "@pkgjs/parseargs": "^0.7.1"
+  }
+}

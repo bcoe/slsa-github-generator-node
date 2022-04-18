@@ -16,11 +16,11 @@ package pkg
 
 import (
 	"fmt"
-	"os"
+	// "os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
+	// "github.com/google/go-cmp/cmp/cmpopts"
 )
 
 func Test_isAllowedEnvVariable(t *testing.T) {
@@ -42,13 +42,8 @@ func Test_isAllowedEnvVariable(t *testing.T) {
 			expected: false,
 		},
 		{
-			name:     "GOSOMETHING variable",
-			variable: "GOSOMETHING",
-			expected: true,
-		},
-		{
-			name:     "CGO_SOMETHING variable",
-			variable: "CGO_SOMETHING",
+			name:     "NODE_SOMETHING variable",
+			variable: "NODE_SOMETHING",
 			expected: true,
 		},
 	}
@@ -173,132 +168,21 @@ func Test_generateOutputFilename(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		filename string
-		goos     string
-		goarch   string
-		envs     string
+		version  string
 		expected struct {
 			err error
 			fn  string
 		}
 	}{
 		{
-			name:     "valid filename",
-			filename: "../filename",
-			expected: struct {
-				err error
-				fn  string
-			}{
-				err: errorInvalidFilename,
-			},
-		},
-		{
-			name:     "valid filename",
-			filename: "",
-			expected: struct {
-				err error
-				fn  string
-			}{
-				err: errorEmptyFilename,
-			},
-		},
-		{
-			name:     "filename arch",
-			filename: "name-{{ .Arch }}",
-			expected: struct {
-				err error
-				fn  string
-			}{
-				err: errorEnvVariableNameEmpty,
-			},
-		},
-		{
-			name:     "filename os",
-			filename: "name-{{ .OS }}",
-			expected: struct {
-				err error
-				fn  string
-			}{
-				err: errorEnvVariableNameEmpty,
-			},
-		},
-		{
-			name:     "filename os",
-			filename: "$bla",
-			expected: struct {
-				err error
-				fn  string
-			}{
-				err: errorInvalidFilename,
-			},
-		},
-		{
-			name:     "filename os",
-			filename: "name-{{ .OS }}",
-			expected: struct {
-				err error
-				fn  string
-			}{
-				err: errorEnvVariableNameEmpty,
-			},
-		},
-		{
-			name:     "filename linux os",
-			filename: "name-{{ .OS }}",
-			goos:     "linux",
+			name:    "foo-pkg",
+			version: "1.2.3",
 			expected: struct {
 				err error
 				fn  string
 			}{
 				err: nil,
-				fn:  "name-linux",
-			},
-		},
-		{
-			name:     "filename amd64 arch",
-			filename: "name-{{ .Arch }}",
-			goarch:   "amd64",
-			expected: struct {
-				err error
-				fn  string
-			}{
-				err: nil,
-				fn:  "name-amd64",
-			},
-		},
-		{
-			name:     "filename amd64/linux arch",
-			filename: "name-{{ .OS }}-{{ .Arch }}",
-			goarch:   "amd64",
-			goos:     "linux",
-			expected: struct {
-				err error
-				fn  string
-			}{
-				err: nil,
-				fn:  "name-linux-amd64",
-			},
-		},
-		{
-			name:     "filename invalid arch",
-			filename: "name-{{ .Arch }}",
-			goarch:   "something/../../",
-			expected: struct {
-				err error
-				fn  string
-			}{
-				err: errorInvalidFilename,
-			},
-		},
-		{
-			name:     "filename invalid not supported",
-			filename: "name-{{ .Bla }}",
-			goarch:   "something/../../",
-			expected: struct {
-				err error
-				fn  string
-			}{
-				err: errorInvalidFilename,
+				fn:  "foo-pkg-1.2.3.tgz",
 			},
 		},
 	}
@@ -308,17 +192,15 @@ func Test_generateOutputFilename(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := goReleaserConfigFile{
-				Binary:  tt.filename,
-				Version: 1,
-				Goos:    tt.goos,
-				Goarch:  tt.goarch,
+			cfg := pkgJsonConfigFile{
+				Name:    tt.name,
+				Version: tt.version,
 			}
-			c, err := fromConfig(&cfg)
+			c, err := pkgJSONFromConfig(&cfg)
 			if err != nil {
-				t.Errorf("fromConfig: %v", err)
+				t.Errorf("pkgJSONFromConfig: %v", err)
 			}
-			b := GoBuildNew("go compiler", c)
+			b := NodeBuildNew("node compiler", c)
 
 			fn, err := b.generateOutputFilename()
 			if !errCmp(err, tt.expected.err) {
@@ -336,6 +218,8 @@ func Test_generateOutputFilename(t *testing.T) {
 	}
 }
 
+// TODO: implement arg env variables for Node builder.
+/*
 func Test_SetArgEnvVariables(t *testing.T) {
 	t.Parallel()
 
@@ -445,7 +329,7 @@ func Test_SetArgEnvVariables(t *testing.T) {
 			if err != nil {
 				t.Errorf("fromConfig: %v", err)
 			}
-			b := GoBuildNew("go compiler", c)
+			b := NodeBuildNew("go compiler", c)
 
 			err = b.SetArgEnvVariables(tt.argEnv)
 			if !errCmp(err, tt.expected.err) {
@@ -463,14 +347,14 @@ func Test_SetArgEnvVariables(t *testing.T) {
 		})
 	}
 }
+*/
 
+// TODO: discuss environment variables required for Node.js builder.
+/*
 func Test_generateEnvVariables(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name     string
-		goos     string
-		goarch   string
 		env      []string
 		expected struct {
 			err   error
@@ -478,43 +362,6 @@ func Test_generateEnvVariables(t *testing.T) {
 		}
 	}{
 		{
-			name:   "empty flags",
-			goos:   "linux",
-			goarch: "x86",
-			expected: struct {
-				err   error
-				flags []string
-			}{
-				flags: []string{"GOOS=linux", "GOARCH=x86"},
-				err:   nil,
-			},
-		},
-		{
-			name:   "empty goos",
-			goarch: "x86",
-			expected: struct {
-				err   error
-				flags []string
-			}{
-				flags: []string{},
-				err:   errorEnvVariableNameEmpty,
-			},
-		},
-		{
-			name: "empty goarch",
-			goos: "windows",
-			expected: struct {
-				err   error
-				flags []string
-			}{
-				flags: []string{},
-				err:   errorEnvVariableNameEmpty,
-			},
-		},
-		{
-			name:   "invalid flags",
-			goos:   "windows",
-			goarch: "amd64",
 			env:    []string{"VAR1=value1", "VAR2=value2"},
 			expected: struct {
 				err   error
@@ -524,9 +371,6 @@ func Test_generateEnvVariables(t *testing.T) {
 			},
 		},
 		{
-			name:   "invalid flags",
-			goos:   "windows",
-			goarch: "amd64",
 			env:    []string{"GOVAR1=value1", "GOVAR2=value2", "CGO_VAR1=val1", "CGO_VAR2=val2"},
 			expected: struct {
 				err   error
@@ -543,20 +387,18 @@ func Test_generateEnvVariables(t *testing.T) {
 
 	for _, tt := range tests {
 		tt := tt // Re-initializing variable so it is not changed while executing the closure below
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run("foo-pkg", func(t *testing.T) {
 			t.Parallel()
 
-			cfg := goReleaserConfigFile{
-				Version: 1,
-				Goos:    tt.goos,
-				Goarch:  tt.goarch,
-				Env:     tt.env,
+			cfg := pkgJsonConfigFile{
+				Name: "foo-pkg",
+				Version:    "1.2.3",
 			}
-			c, err := fromConfig(&cfg)
+			c, err := pkgJSONFromConfig(&cfg)
 			if err != nil {
-				t.Errorf("fromConfig: %v", err)
+				t.Errorf("pkgJSONFromConfig: %v", err)
 			}
-			b := GoBuildNew("go compiler", c)
+			b := NodeBuildNew("node compiler", c)
 
 			flags, err := b.generateEnvVariables()
 
@@ -575,173 +417,10 @@ func Test_generateEnvVariables(t *testing.T) {
 		})
 	}
 }
+*/
 
-func Test_generateLdflags(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name     string
-		argEnv   string
-		ldflags  []string
-		expected struct {
-			err     error
-			ldflags string
-		}
-	}{
-		{
-			name:    "version ldflags",
-			argEnv:  "VERSION_LDFLAGS:value1",
-			ldflags: []string{"{{ .Env.VERSION_LDFLAGS }}"},
-			expected: struct {
-				err     error
-				ldflags string
-			}{
-				ldflags: "value1",
-				err:     nil,
-			},
-		},
-		{
-			name:    "one value with text",
-			argEnv:  "VAR1:value1, VAR2:value2",
-			ldflags: []string{"name-{{ .Env.VAR1 }}"},
-			expected: struct {
-				err     error
-				ldflags string
-			}{
-				ldflags: "name-value1",
-				err:     nil,
-			},
-		},
-		{
-			name:    "two values with text",
-			argEnv:  "VAR1:value1, VAR2:value2",
-			ldflags: []string{"name-{{ .Env.VAR1 }}-{{ .Env.VAR2 }}"},
-			expected: struct {
-				err     error
-				ldflags string
-			}{
-				ldflags: "name-value1-value2",
-				err:     nil,
-			},
-		},
-		{
-			name:    "two values with text and not space between env",
-			argEnv:  "VAR1:value1,VAR2:value2",
-			ldflags: []string{"name-{{ .Env.VAR1 }}-{{ .Env.VAR2 }}"},
-			expected: struct {
-				err     error
-				ldflags string
-			}{
-				ldflags: "name-value1-value2",
-				err:     nil,
-			},
-		},
-		{
-			name:    "same two values with text",
-			argEnv:  "VAR1:value1, VAR2:value2",
-			ldflags: []string{"name-{{ .Env.VAR1 }}-{{ .Env.VAR1 }}"},
-			expected: struct {
-				err     error
-				ldflags string
-			}{
-				ldflags: "name-value1-value1",
-				err:     nil,
-			},
-		},
-		{
-			name:    "same value extremeties",
-			argEnv:  "VAR1:value1, VAR2:value2",
-			ldflags: []string{"{{ .Env.VAR1 }}-name-{{ .Env.VAR1 }}"},
-			expected: struct {
-				err     error
-				ldflags string
-			}{
-				ldflags: "value1-name-value1",
-				err:     nil,
-			},
-		},
-		{
-			name:    "two different value extremeties",
-			argEnv:  "VAR1:value1, VAR2:value2",
-			ldflags: []string{"{{ .Env.VAR1 }}-name-{{ .Env.VAR2 }}"},
-			expected: struct {
-				err     error
-				ldflags string
-			}{
-				ldflags: "value1-name-value2",
-				err:     nil,
-			},
-		},
-		{
-			name:    "undefined env variable",
-			argEnv:  "VAR2:value2",
-			ldflags: []string{"{{ .Env.VAR1 }}-name-{{ .Env.VAR1 }}"},
-			expected: struct {
-				err     error
-				ldflags string
-			}{
-				err: errorEnvVariableNameEmpty,
-			},
-		},
-		{
-			name:    "undefined env variable 1",
-			argEnv:  "VAR2:value2",
-			ldflags: []string{"{{ .Env.VAR2 }}-name-{{ .Env.VAR1 }}"},
-			expected: struct {
-				err     error
-				ldflags string
-			}{
-				err: errorEnvVariableNameEmpty,
-			},
-		},
-		{
-			name:    "empty env variable",
-			argEnv:  "",
-			ldflags: []string{"{{ .Env.VAR1 }}-name-{{ .Env.VAR1 }}"},
-			expected: struct {
-				err     error
-				ldflags string
-			}{
-				err: errorEnvVariableNameEmpty,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt // Re-initializing variable so it is not changed while executing the closure below
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			cfg := goReleaserConfigFile{
-				Version: 1,
-				Ldflags: tt.ldflags,
-			}
-			c, err := fromConfig(&cfg)
-			if err != nil {
-				t.Errorf("fromConfig: %v", err)
-			}
-			b := GoBuildNew("go compiler", c)
-
-			err = b.SetArgEnvVariables(tt.argEnv)
-			if err != nil {
-				t.Errorf("SetArgEnvVariables: %v", err)
-			}
-			ldflags, err := b.generateLdflags()
-
-			if !errCmp(err, tt.expected.err) {
-				t.Errorf(cmp.Diff(err, tt.expected.err))
-			}
-			if err != nil {
-				return
-			}
-			// Note: generated env variables contain the process's env variables too.
-			if !cmp.Equal(ldflags, tt.expected.ldflags) {
-				t.Errorf(cmp.Diff(ldflags, tt.expected.ldflags))
-			}
-		})
-	}
-}
-
+// TODO: discuss flags supported for Node.js builder.
+/*
 func Test_generateFlags(t *testing.T) {
 	t.Parallel()
 
@@ -816,3 +495,4 @@ func Test_generateFlags(t *testing.T) {
 		})
 	}
 }
+*/

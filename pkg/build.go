@@ -33,43 +33,35 @@ var (
 	errorEmptyFilename             = errors.New("filename is not set")
 )
 
-// See `go build help`.
-// `-asmflags`, `-n`, `-mod`, `-installsuffix`, `-modfile`,
-// `-workfile`, `-overlay`, `-pkgdir`, `-toolexec`, `-o`,
-// `-modcacherw`, `-work` not supported for now.
+// See `npm pack --help`.
 
 var allowedBuildArgs = map[string]bool{
-	"-a": true, "-race": true, "-msan": true, "-asan": true,
-	"-v": true, "-x": true, "-buildinfo": true,
-	"-buildmode": true, "-buildvcs": true, "-compiler": true,
-	"-gccgoflags": true, "-gcflags": true,
-	"-ldflags": true, "-linkshared": true,
-	"-tags": true, "-trimpath": true,
+	"--workspace":              true,
+	"--include-workspace-root": true,
 }
 
 var allowedEnvVariablePrefix = map[string]bool{
-	"GO": true, "CGO_": true,
+	"NODE_": true,
 }
 
-type GoBuild struct {
-	cfg *GoReleaserConfig
-	goc string
+type NodeBuild struct {
+	pkgJson *PkgJsonConfig
+	node    string
 	// Note: static env variables are contained in cfg.Env.
-	argEnv  map[string]string
-	ldflags string
+	argEnv map[string]string
 }
 
-func GoBuildNew(goc string, cfg *GoReleaserConfig) *GoBuild {
-	c := GoBuild{
-		cfg:    cfg,
-		goc:    goc,
-		argEnv: make(map[string]string),
+func NodeBuildNew(node string, pkgJson *PkgJsonConfig) *NodeBuild {
+	c := NodeBuild{
+		pkgJson: pkgJson,
+		node:    node,
+		argEnv:  make(map[string]string),
 	}
 
 	return &c
 }
 
-func (b *GoBuild) Run(dry bool) error {
+func (b *NodeBuild) Run(dry bool) error {
 	// Set flags.
 	flags, err := b.generateFlags()
 	if err != nil {
@@ -80,17 +72,6 @@ func (b *GoBuild) Run(dry bool) error {
 	envs, err := b.generateEnvVariables()
 	if err != nil {
 		return err
-	}
-
-	// Generate ldflags.
-	ldflags, err := b.generateLdflags()
-	if err != nil {
-		return err
-	}
-
-	// Add ldflags.
-	if len(ldflags) > 0 {
-		flags = append(flags, fmt.Sprintf("-ldflags=%s", ldflags))
 	}
 
 	// A dry run prints the information that is trusted, before
@@ -110,13 +91,13 @@ func (b *GoBuild) Run(dry bool) error {
 		com := append(flags, []string{"-o", filename}...)
 
 		// Share the resolved name of the binary.
-		fmt.Printf("::set-output name=go-binary-name::%s\n", filename)
+		fmt.Printf("::set-output name=node-package-name::%s\n", filename)
 		command, err := marshallList(com)
 		if err != nil {
 			return err
 		}
 		// Share the command used.
-		fmt.Printf("::set-output name=go-command::%s\n", command)
+		fmt.Printf("::set-output name=node-command::%s\n", command)
 
 		env, err := b.generateCommandEnvVariables()
 		if err != nil {
@@ -129,7 +110,7 @@ func (b *GoBuild) Run(dry bool) error {
 		}
 
 		// Share the env variables used.
-		fmt.Printf("::set-output name=go-env::%s\n", menv)
+		fmt.Printf("::set-output name=node-env::%s\n", menv)
 		return nil
 	}
 
@@ -141,12 +122,12 @@ func (b *GoBuild) Run(dry bool) error {
 	}
 
 	// Set the filename last.
-	command := append(flags, []string{"-o", binary}...)
+	command := append(flags, []string{binary}...)
 
 	fmt.Println("binary", binary)
 	fmt.Println("command", command)
 	fmt.Println("env", envs)
-	return syscall.Exec(b.goc, command, envs)
+	return syscall.Exec(b.node, command, envs)
 }
 
 func marshallList(args []string) (string, error) {
@@ -162,32 +143,29 @@ func marshallList(args []string) (string, error) {
 	return encoded, nil
 }
 
-func (b *GoBuild) generateCommandEnvVariables() ([]string, error) {
+func (b *NodeBuild) generateCommandEnvVariables() ([]string, error) {
 	var env []string
 
-	if b.cfg.Goos == "" {
-		return nil, fmt.Errorf("%w: %s", errorEnvVariableNameEmpty, "GOOS")
-	}
-	env = append(env, fmt.Sprintf("GOOS=%s", b.cfg.Goos))
+	// TODO: what's the equivalent of Goos for Node.js?
+	// if b.cfg.Goos == "" {
+	//	return nil, fmt.Errorf("%w: %s", errorEnvVariableNameEmpty, "GOOS")
+	//}
+	//env = append(env, fmt.Sprintf("GOOS=%s", b.cfg.Goos))
 
-	if b.cfg.Goarch == "" {
-		return nil, fmt.Errorf("%w: %s", errorEnvVariableNameEmpty, "GOARCH")
-	}
-	env = append(env, fmt.Sprintf("GOARCH=%s", b.cfg.Goarch))
-
+	// TODO: what environment variables might we allow list for Node.js.
 	// Set env variables from config file.
-	for k, v := range b.cfg.Env {
-		if !isAllowedEnvVariable(k) {
-			return env, fmt.Errorf("%w: %s", errorEnvVariableNameNotAllowed, v)
-		}
+	// for k, v := range b.cfg.Env {
+	//	if !isAllowedEnvVariable(k) {
+	//		return env, fmt.Errorf("%w: %s", errorEnvVariableNameNotAllowed, v)
+	//	}
 
-		env = append(env, fmt.Sprintf("%s=%s", k, v))
-	}
+	//	env = append(env, fmt.Sprintf("%s=%s", k, v))
+	//}
 
 	return env, nil
 }
 
-func (b *GoBuild) generateEnvVariables() ([]string, error) {
+func (b *NodeBuild) generateEnvVariables() ([]string, error) {
 	env := os.Environ()
 
 	cenv, err := b.generateCommandEnvVariables()
@@ -200,7 +178,7 @@ func (b *GoBuild) generateEnvVariables() ([]string, error) {
 	return env, nil
 }
 
-func (b *GoBuild) SetArgEnvVariables(envs string) error {
+func (b *NodeBuild) SetArgEnvVariables(envs string) error {
 	// Notes:
 	// - I've tried running the re-usable workflow in a step
 	// and set the env variable in a previous step, but found that a re-usable workflow is not
@@ -229,46 +207,23 @@ func (b *GoBuild) SetArgEnvVariables(envs string) error {
 	return nil
 }
 
-func (b *GoBuild) generateOutputFilename() (string, error) {
-	const alpha = "abcdefghijklmnopqrstuvwxyz1234567890-_"
+func (b *NodeBuild) generateOutputFilename() (string, error) {
+	// TODO: validate that "name", "version", are not nil.
 
-	var name string
-
-	// Replace .OS variable.
-	if strings.Contains(b.cfg.Binary, "{{ .OS }}") && b.cfg.Goos == "" {
-		return "", fmt.Errorf("%w", errorEnvVariableNameEmpty)
-	}
-	name = strings.ReplaceAll(b.cfg.Binary, "{{ .OS }}", b.cfg.Goos)
-
-	// Replace .Arch variable.
-	if strings.Contains(name, "{{ .Arch }}") && b.cfg.Goarch == "" {
-		return "", fmt.Errorf("%w", errorEnvVariableNameEmpty)
-	}
-	name = strings.ReplaceAll(name, "{{ .Arch }}", b.cfg.Goarch)
-
-	for _, char := range name {
-		if !strings.Contains(alpha, strings.ToLower(string(char))) {
-			return "", fmt.Errorf("%w: found character '%c'", errorInvalidFilename, char)
-		}
-	}
-
-	if name == "" {
-		return "", fmt.Errorf("%w", errorEmptyFilename)
-	}
-	return name, nil
+	return b.pkgJson.Name + "-" + b.pkgJson.Version + ".tgz", nil
 }
 
-func (b *GoBuild) generateFlags() ([]string, error) {
+func (b *NodeBuild) generateFlags() ([]string, error) {
 	// -x
-	flags := []string{b.goc, "build", "-mod=vendor"}
+	flags := []string{}
 
-	for _, v := range b.cfg.Flags {
-		if !isAllowedArg(v) {
-			return nil, fmt.Errorf("%w: %s", errorUnsupportedArguments, v)
-		}
-		flags = append(flags, v)
-
-	}
+	// TODO: add support for flags in Node.js build.
+	//for _, v := range b.cfg.Flags {
+	//	if !isAllowedArg(v) {
+	//		return nil, fmt.Errorf("%w: %s", errorUnsupportedArguments, v)
+	//	}
+	//	flags = append(flags, v)
+	//}
 	return flags, nil
 }
 
@@ -291,48 +246,4 @@ func isAllowedEnvVariable(name string) bool {
 		}
 	}
 	return false
-}
-
-// TODO: maybe not needed if handled directly by go compiler.
-func (b *GoBuild) generateLdflags() (string, error) {
-	var a []string
-
-	for _, v := range b.cfg.Ldflags {
-		var res string
-		ss := "{{ .Env."
-		es := "}}"
-		found := false
-		for true {
-			start := strings.Index(v, ss)
-			if start == -1 {
-				break
-			}
-			end := strings.Index(string(v[start+len(ss):]), es)
-			if end == -1 {
-				return "", fmt.Errorf("%w: %s", errorInvalidEnvArgument, v)
-			}
-
-			name := strings.Trim(string(v[start+len(ss):start+len(ss)+end]), " ")
-			if name == "" {
-				return "", fmt.Errorf("%w: %s", errorEnvVariableNameEmpty, v)
-			}
-
-			val, exists := b.argEnv[name]
-			if !exists {
-				return "", fmt.Errorf("%w: %s", errorEnvVariableNameEmpty, name)
-			}
-			res = fmt.Sprintf("%s%s%s", res, v[:start], val)
-			found = true
-			v = v[start+len(ss)+end+len(es):]
-		}
-		if !found {
-			res = v
-		}
-		a = append(a, res)
-	}
-	if len(a) > 0 {
-		return fmt.Sprintf("%s", strings.Join(a, " ")), nil
-	}
-
-	return "", nil
 }
