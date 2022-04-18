@@ -142,8 +142,6 @@ jobs:
       id-token: write
       contents: read
     uses: bcoe/slsa-github-generator-node/.github/workflows/builder.yml@main # TODO: use hash upon release.
-    with:
-      go-version: 1.17
   
   # Upload to GitHub release.
   upload:

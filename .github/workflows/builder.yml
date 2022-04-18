@@ -32,10 +32,6 @@ env:
 on:
   workflow_call:
     inputs:
-      go-version:
-        description: "The go version to use"
-        required: true
-        type: string
       env:
         description: "Env variables to pass to the builder"
         required: false
