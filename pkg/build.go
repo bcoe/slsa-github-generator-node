@@ -111,9 +111,8 @@ func (b *NodeBuild) Run(dry bool) error {
 	}
 
 	// Set the filename last.
-	command := append(flags, []string{binary}...)
+	command := append(flags, []string{}...)
 
-	fmt.Println("binary", binary)
 	fmt.Println("command", command)
 	fmt.Println("env", envs)
 	return syscall.Exec(b.node, command, envs)
