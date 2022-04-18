@@ -76,6 +76,8 @@ func (b *NodeBuild) Run(dry bool) error {
 		return err
 	}
 
+	com := append([]string{b.node, b.npm, "pack"}, flags...)
+
 	// A dry run prints the information that is trusted, before
 	// the compiler is invoked.
 	if dry {
@@ -84,9 +86,6 @@ func (b *NodeBuild) Run(dry bool) error {
 		if err != nil {
 			return err
 		}
-
-		// Set the filename last.
-		com := append(flags, []string{"-o", filename}...)
 
 		// Share the resolved name of the binary.
 		fmt.Printf("::set-output name=node-package-name::%s\n", filename)
@@ -112,11 +111,9 @@ func (b *NodeBuild) Run(dry bool) error {
 		return nil
 	}
 
-	command := append([]string{b.node, b.npm, "pack"}, flags...)
-
-	fmt.Println("command", command)
+	fmt.Println("command", com)
 	fmt.Println("env", envs)
-	return syscall.Exec(b.node, command, envs)
+	return syscall.Exec(b.node, com, envs)
 }
 
 func marshallList(args []string) (string, error) {

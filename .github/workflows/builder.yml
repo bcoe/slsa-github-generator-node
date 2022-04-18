@@ -365,8 +365,8 @@ jobs:
         env:
           UNTRUSTED_BINARY_NAME: "${{ needs.build-dry.outputs.node-package-name }}"
           UNTRUSTED_BINARY_HASH: "${{ needs.build.outputs.node-package-sha256 }}"
-          UNTRUSTED_COMMAND: "${{ needs.build-dry.outputs.go-command }}"
-          UNTRUSTED_ENV: "${{ needs.build-dry.outputs.go-env }}"
+          UNTRUSTED_COMMAND: "${{ needs.build-dry.outputs.node-command }}"
+          UNTRUSTED_ENV: "${{ needs.build-dry.outputs.node-env }}"
           BUILDER_BINARY: "${{ env.BUILDER_BINARY }}"
           GITHUB_CONTEXT: "${{ toJSON(github) }}"
         run: |
